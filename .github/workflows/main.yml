@@ -1,0 +1,30 @@
+name: VM Windows Roblox
+on:
+  workflow_dispatch:
+
+jobs:
+  criar-vm:
+    runs-on: windows-latest
+    timeout-minutes: 360
+    steps:
+      - name: Configurar Windows e Área de Trabalho Remota
+        run: |
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0 -Force
+          Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server\WinStations\RDP-Tcp' -Name "UserAuthentication" -Value 0 -Force
+          Enable-NetFirewallRule -Name "RemoteDesktop-UserMode-In-TCP"
+          net user RobloxVM Senha123! /add
+          net localgroup Administrators RobloxVM /add  # ← AQUI ERA O ERRO: trocamos para inglês!
+
+      - name: Instalar e conectar Tailscale
+        run: |
+          winget install --id Tailscale.Tailscale --silent --accept-package-agreements --accept-source-agreements
+          & "C:\Program Files\Tailscale\tailscale.exe" up --authkey=${{ secrets.TAILSCALE_AUTH_KEY }} --hostname=VM-Roblox-GitHub
+          Start-Sleep -Seconds 10
+
+      - name: Mostrar dados de conexão
+        run: |
+          Write-Host "✅ IP da VM:"
+          & "C:\Program Files\Tailscale\tailscale.exe" ip -4
+          Write-Host "👤 Usuário: RobloxVM"
+          Write-Host "🔑 Senha: Senha123!"
+          
